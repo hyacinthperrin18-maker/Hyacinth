@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <link rel="stylesheet" href="./css/style.css" />
+        <script type="module" src="./js/main.js"></script>
+    </head>
+    <body>
+        <form class="join-form">
+            <input type="text" name="username" placeholder="Username" />
+            <button type="submit">Join</button>
+        </form>
+
+        <button id="ready" disabled>Ready</button>
+
+        <div id="chat-container">
+            <div class="container">
+                <button class="toggle">
+                    <iconify-icon
+                        icon="ph:chat-teardrop-text-duotone"
+                    ></iconify-icon>
+                </button>
+                <ul class="users"></ul>
+                <div class="messages"></div>
+                <form>
+                    <input
+                        id="chat-input"
+                        type="text"
+                        placeholder="Message..."
+                        autocomplete="off"
+                    />
+                    <button type="submit">
+                        <iconify-icon
+                            icon="fa6-solid:paper-plane"
+                        ></iconify-icon>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

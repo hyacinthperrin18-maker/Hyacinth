@@ -7,7 +7,14 @@ import { Server } from "socket.io";
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
+        credentials: true,
+    },
+});
 
 const sizes = {
     poche: 1,
@@ -24,7 +31,15 @@ const sizes = {
  * }[]}
  */
 const users = [];
-const messages =[];
+
+/**
+ * @type {{
+ *  socketId: string;
+ *  username: string;
+ *  content: string;
+ * }[]}
+ */
+const messages = [];
 
 /**
  * @type {null | {
@@ -41,10 +56,6 @@ const messages =[];
  */
 let session = null;
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(import.meta.dirname, "../client/index.html"));
-});
-
 app.get("/books.json", (req, res) => {
     res.json(books);
 });
@@ -55,6 +66,8 @@ app.get("/ping", (req, res) => {
 
 io.on("connection", (socket) => {
     socket.emit("users", users);
+    socket.emit("messages", messages);
+    socket.emit("session", session);
 
     socket.on("join", (username) => {
         const user = users.find((user) => user.socketId === socket.id);
@@ -69,12 +82,28 @@ io.on("connection", (socket) => {
             }
 
             user.username = username;
+
+            messages.forEach((msg) => {
+                if (msg.socketId === user.socketId) {
+                    msg.username = username;
+                }
+            });
+
+            io.emit("messages", messages);
         } else {
             users.push({
                 socketId: socket.id,
                 username,
-                ready: false,
+                ready: !!session,
             });
+
+            messages.forEach((msg) => {
+                if (msg.username === username) {
+                    msg.socketId = socket.id;
+                }
+            });
+
+            io.emit("messages", messages);
         }
 
         io.emit("users", users);
@@ -126,7 +155,27 @@ io.on("connection", (socket) => {
                 })),
             };
 
-            io.emit("start", session);
+            io.emit("session", session);
+        }
+    });
+
+    socket.on("message", (message) => {
+        message = message.trim();
+
+        if (!message) {
+            return;
+        }
+
+        const user = users.find((user) => user.socketId === socket.id);
+
+        if (user) {
+            messages.push({
+                socketId: socket.id,
+                username: user.username,
+                content: message,
+            });
+
+            io.emit("messages", messages);
         }
     });
 });
