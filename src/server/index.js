@@ -24,6 +24,7 @@ const sizes = {
  * }[]}
  */
 const users = [];
+const messages =[];
 
 /**
  * @type {null | {
