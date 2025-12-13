@@ -42,14 +42,27 @@ const users = [];
 const messages = [];
 
 /**
+ * @typedef {Object} Book
+ * @property {string} id
+ * @property {string} titre
+ * @property {string} auteur
+ * @property {string} [nom]
+ * @property {string} genre
+ * @property {string} format
+ * @property {string} [littérature]
+ */
+
+/**
  * @type {null | {
- *  books: {}[];
+ *  books: Book[];
+ *  availableBooks: Book[];
+ *  currentPlayerIndex: number;
  *  shelves: {
  *   format: string;
  *   size: number;
  *   genres: {
  *      type: string;
- *      books: {}[];
+ *      books: Book[];
  *   }[];
  * }[];
  * }}
@@ -137,7 +150,7 @@ io.on("connection", (socket) => {
             for (let i = 0; i < 30; i++) {
                 const index = Math.floor(Math.random() * bag.length);
                 const item = bag.splice(index, 1)[0];
-                items.push(item);
+                items.push({ ...item, id: `book-${i}` });
             }
 
             const genres = [...new Set(items.map((item) => item.genre))];
@@ -145,6 +158,8 @@ io.on("connection", (socket) => {
 
             session = {
                 books: items,
+                availableBooks: [...items],
+                currentPlayerIndex: 0,
                 shelves: formats.map((format) => ({
                     format,
                     size: sizes[format],
@@ -177,6 +192,78 @@ io.on("connection", (socket) => {
 
             io.emit("messages", messages);
         }
+    });
+
+    socket.on("placeBook", ({ bookId, shelfFormat, genreType }) => {
+        if (!session) return;
+
+        const user = users.find((user) => user.socketId === socket.id);
+        if (!user) return;
+
+        // Vérifier que c'est le tour de ce joueur
+        const currentPlayer = users[session.currentPlayerIndex];
+        if (currentPlayer.socketId !== socket.id) {
+            socket.emit("placementError", {
+                message: "Ce n'est pas votre tour !",
+            });
+            return;
+        }
+
+        // Trouver le livre dans availableBooks
+        const bookIndex = session.availableBooks.findIndex(
+            (book) => book.id === bookId
+        );
+        if (bookIndex === -1) {
+            socket.emit("placementError", {
+                message: "Ce livre n'est plus disponible",
+            });
+            return;
+        }
+
+        const book = session.availableBooks[bookIndex];
+
+        // Valider que le livre va dans la bonne section (format + genre)
+        if (book.format !== shelfFormat || book.genre !== genreType) {
+            socket.emit("placementError", {
+                message: "Ce livre ne va pas ici !",
+                bookId,
+            });
+            return;
+        }
+
+        // Placer le livre
+        const shelf = session.shelves.find((s) => s.format === shelfFormat);
+        const genre = shelf.genres.find((g) => g.type === genreType);
+        genre.books.push(book);
+
+        // Retirer le livre des disponibles
+        session.availableBooks.splice(bookIndex, 1);
+
+        // Passer au joueur suivant
+        session.currentPlayerIndex =
+            (session.currentPlayerIndex + 1) % users.length;
+
+        // Vérifier si tous les livres sont placés
+        const gameComplete = session.availableBooks.length === 0;
+
+        io.emit("session", session);
+
+        if (gameComplete) {
+            io.emit("gameComplete", {
+                message: "Bravo ! Tous les livres sont rangés !",
+            });
+        }
+    });
+
+    socket.on("restartGame", () => {
+        // Réinitialiser la session et les utilisateurs
+        session = null;
+        users.forEach((user) => {
+            user.ready = false;
+        });
+
+        // Informer tous les clients de recharger la page
+        io.emit("restart");
     });
 });
 
