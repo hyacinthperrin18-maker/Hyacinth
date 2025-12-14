@@ -31,7 +31,7 @@ npm run start:frontend
 
 ---
 
-##Pourquoi deux terminaux ?
+## Pourquoi deux terminaux ?
 
 Le backend et le frontend sont deux serveurs distincts.
 
@@ -42,7 +42,7 @@ Le frontend affiche le jeu et se met à jour en temps réel grâce aux données 
 ---
 
 
-##Technologies utilisées
+## Technologies utilisées
 
 Node.js pour le backend
 
@@ -56,7 +56,7 @@ HTML / CSS / JavaScript pour l’interface utilisateur
 
 ---
 
-##Utilisation du jeu
+## Utilisation du jeu
 
 Ouvrir le frontend dans le navigateur : http://localhost:5173.
 
