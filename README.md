@@ -1,4 +1,4 @@
-# RangeLesLivres
+# RangeLesLivres par **Hyacinth PERRIN et Talian FAJARDO**
 
 ## Présentation du projet
 RangeLesLivres est un projet web interactif qui combine un **backend Node.js** et un **frontend développé avec Vite**.  
